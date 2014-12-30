@@ -3,14 +3,13 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Course.Applicative(
-  Applicative(..)
-, sequence
-, replicateA
-, filtering
-, return
-, fail
-) where
+module Course.Applicative( Applicative(..)
+                         , sequence
+                         , replicateA
+                         , filtering
+                         , return
+                         , fail
+                         ) where
 
 import Course.Core
 import Course.Apply
@@ -20,8 +19,7 @@ import Course.Optional
 import qualified Prelude as P
 
 class Apply f => Applicative f where
-  pure ::
-    a -> f a
+  pure :: a -> f a
 
 -- | Witness that all things with (<*>) and pure also have (<$>).
 --
@@ -33,53 +31,43 @@ class Apply f => Applicative f where
 --
 -- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
-(<$>) ::
-  Applicative f =>
-  (a -> b)
-  -> f a
-  -> f b
-(<$>) =
-  error "todo"
+(<$>) :: Applicative f =>
+        (a -> b)
+      -> f a
+      -> f b
+(<$>) f a = pure f <*> a
 
 -- | Insert into Id.
 --
 -- prop> pure x == Id x
 instance Applicative Id where
-  pure ::
-    a
-    -> Id a
-  pure =
-    error "todo"
+  pure :: a
+       -> Id a
+  pure = Id
 
 -- | Insert into a List.
 --
 -- prop> pure x == x :. Nil
 instance Applicative List where
-  pure ::
-    a
-    -> List a
-  pure =
-    error "todo"
+  pure :: a
+       -> List a
+  pure a = a :. Nil
 
 -- | Insert into an Optional.
 --
 -- prop> pure x == Full x
 instance Applicative Optional where
-  pure ::
-    a
-    -> Optional a
-  pure =
-    error "todo"
+  pure :: a
+       -> Optional a
+  pure a = Full a
 
 -- | Insert into a constant function.
 --
 -- prop> pure x y == x
 instance Applicative ((->) t) where
-  pure ::
-    a
-    -> ((->) t a)
-  pure =
-    error "todo"
+  pure :: a
+       -> ((->) t a)
+  pure = const
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -97,12 +85,10 @@ instance Applicative ((->) t) where
 --
 -- >>> sequence ((*10) :. (+2) :. Nil) 6
 -- [60,8]
-sequence ::
-  Applicative f =>
-  List (f a)
-  -> f (List a)
-sequence =
-  error "todo"
+sequence :: Applicative f =>
+           List (f a)
+         -> f (List a)
+sequence = foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -120,13 +106,11 @@ sequence =
 --
 -- >>> replicateA 3 ['a', 'b', 'c']
 -- ["aaa","aab","aac","aba","abb","abc","aca","acb","acc","baa","bab","bac","bba","bbb","bbc","bca","bcb","bcc","caa","cab","cac","cba","cbb","cbc","cca","ccb","ccc"]
-replicateA ::
-  Applicative f =>
-  Int
-  -> f a
-  -> f (List a)
-replicateA =
-  error "todo"
+replicateA :: Applicative f =>
+             Int
+           -> f a
+           -> f (List a)
+replicateA times = sequence . (replicate times)
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -148,40 +132,34 @@ replicateA =
 -- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
 -- [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
 --
-filtering ::
-  Applicative f =>
-  (a -> f Bool)
-  -> List a
-  -> f (List a)
-filtering =
-  error "todo"
+filtering :: Applicative f =>
+            (a -> f Bool)
+          -> List a
+          -> f (List a)
+-- filtering c = foldRight (\x -> lift2 (\y -> if y then (x:.) else id) (c x)) (pure Nil)
+filtering c = foldRight match (pure Nil)
+  where match  x   = lift2 (switch x) (c x)
+        switch x y = if y then (x:.) else id
 
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------
 
 instance Applicative IO where
-  pure =
-    P.return
+  pure = P.return
 
 instance Applicative [] where
-  pure =
-    P.return
+  pure = P.return
 
 instance Applicative P.Maybe where
-  pure =
-    P.return
+  pure = P.return
 
-return ::
-  Applicative f =>
-  a
-  -> f a
-return =
-  pure
+return :: Applicative f =>
+         a
+       -> f a
+return = pure
 
-fail ::
-  Applicative f =>
-  Chars
-  -> f a
-fail =
-  error . hlist
+fail :: Applicative f =>
+       Chars
+     -> f a
+fail = error . hlist

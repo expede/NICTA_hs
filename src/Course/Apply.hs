@@ -16,7 +16,6 @@ class Functor f => Apply f where
   (<*>) :: f (a -> b)
         -> f a
         -> f b
-  pure :: a -> f a
 
 infixl 4 <*>
 
@@ -30,9 +29,6 @@ instance Apply Id where
         -> Id b
   (<*>) (Id a) (Id b) = Id (a b)
 
-  pure :: a -> Id a
-  pure a = Id a
-
 -- | Implement @Apply@ instance for @List@.
 --
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
@@ -42,9 +38,6 @@ instance Apply List where
         -> List a
         -> List b
   (<*>) f a = flatMap (<$> a) f
-
-  pure :: a -> List a
-  pure a = (a :. Nil)
 
 -- | Implement @Apply@ instance for @Optional@.
 --
@@ -61,9 +54,6 @@ instance Apply Optional where
         -> Optional a
         -> Optional b
   (<*>) f a = bindOptional (<$> a) f
-
-  pure :: a -> Optional a
-  pure a = Full a
 
 -- | Implement @Apply@ instance for reader.
 --
@@ -86,9 +76,6 @@ instance Apply ((->) t) where
         -> ((->) t a)
         -> ((->) t b)
   (<*>) f g a = a `f` g a
-
-  pure :: a -> ((->) t a)
-  pure = const
 
 -- | Apply a binary function in the environment.
 --
@@ -231,15 +218,15 @@ lift4 f a b c d = f <$> a <*> b <*> c <*> d
 
 instance Apply IO where
   f <*> a = f P.>>= \f' -> P.fmap f' a
-  pure  a = P.return a
+  -- pure  a = P.return a
 
 instance Apply [] where
   f <*> a = f P.>>= \f' -> P.fmap f' a
-  pure  a = P.return a
+  -- pure  a = P.return a
 
 instance Apply P.Maybe where
   f <*> a = f P.>>= \f' -> P.fmap f' a
-  pure  a = P.return a
+  -- pure  a = P.return a
 
 (>>) :: Apply f =>
        f a
