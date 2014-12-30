@@ -11,7 +11,7 @@ import Course.Optional
 import Course.List
 import Course.Functor
 import Course.Apply
-import Course.Applicative
+-- import Course.Applicative
 import Course.Bind
 import Course.Monad
 import qualified Data.Set as S
@@ -55,7 +55,7 @@ instance Apply (State s) where
   (<*>) ::
     State s (a -> b)
     -> State s a
-    -> State s b 
+    -> State s b
   (<*>) =
     error "todo"
 

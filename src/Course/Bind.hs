@@ -3,12 +3,11 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Course.Bind(
-  Bind(..)
-, (>>=)
-, join
-, (<=<)
-) where
+module Course.Bind( Bind(..)
+                  , (>>=)
+                  , join
+                  , (<=<)
+                  ) where
 
 import Course.Core
 import Course.Functor
@@ -20,10 +19,9 @@ import qualified Prelude as P
 
 class Apply f => Bind f where
   -- Pronounced, bind.
-  (=<<) ::
-    (a -> f b)
-    -> f a
-    -> f b
+  (=<<) :: (a -> f b)
+        -> f a
+        -> f b
 
 infixr 1 =<<
 
@@ -58,13 +56,11 @@ infixr 1 =<<
 --
 -- >>> ((*) <*> (+2)) 3
 -- 15
-(<*>) ::
-  Bind f =>
-  f (a -> b)
-  -> f a
-  -> f b
-(<*>) =
-  error "todo"
+(<*>) :: Bind f =>
+        f (a -> b)
+      -> f a
+      -> f b
+(<*>) f a = (<$> a) =<< f
 
 infixl 4 <*>
 
@@ -73,48 +69,40 @@ infixl 4 <*>
 -- >>> (\x -> Id(x+1)) =<< Id 2
 -- Id 3
 instance Bind Id where
-  (=<<) ::
-    (a -> Id b)
-    -> Id a
-    -> Id b
-  (=<<) =
-    error "todo"
+  (=<<) :: (a -> Id b)
+        -> Id a
+        -> Id b
+  (=<<) f (Id a) = f a
 
 -- | Binds a function on a List.
 --
 -- >>> (\n -> n :. n :. Nil) =<< (1 :. 2 :. 3 :. Nil)
 -- [1,1,2,2,3,3]
 instance Bind List where
-  (=<<) ::
-    (a -> List b)
-    -> List a
-    -> List b
-  (=<<) =
-    error "todo"
+  (=<<) :: (a -> List b)
+        -> List a
+        -> List b
+  (=<<) = flatMap
 
 -- | Binds a function on an Optional.
 --
 -- >>> (\n -> Full (n + n)) =<< Full 7
 -- Full 14
 instance Bind Optional where
-  (=<<) ::
-    (a -> Optional b)
-    -> Optional a
-    -> Optional b
-  (=<<) =
-    error "todo"
+  (=<<) :: (a -> Optional b)
+        -> Optional a
+        -> Optional b
+  (=<<) = bindOptional
 
 -- | Binds a function on the reader ((->) t).
 --
 -- >>> ((*) =<< (+10)) 7
 -- 119
 instance Bind ((->) t) where
-  (=<<) ::
-    (a -> ((->) t b))
-    -> ((->) t a)
-    -> ((->) t b)
-  (=<<) =
-    error "todo"
+  (=<<) :: (a -> ((->) t b))
+        -> ((->) t a)
+        -> ((->) t b)
+  (f =<< g) a = (f . g) a a
 
 -- | Flattens a combined structure to a single structure.
 --
@@ -129,12 +117,10 @@ instance Bind ((->) t) where
 --
 -- >>> join (+) 7
 -- 14
-join ::
-  Bind f =>
-  f (f a)
-  -> f a
-join =
-  error "todo"
+join :: Bind f =>
+       f (f a)
+     -> f a
+join = (=<<) id
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
@@ -142,13 +128,11 @@ join =
 --
 -- >>> ((+10) >>= (*)) 7
 -- 119
-(>>=) ::
-  Bind f =>
-  f a
-  -> (a -> f b)
-  -> f b
-(>>=) =
-  error "todo"
+(>>=) :: Bind f =>
+        f a
+      -> (a -> f b)
+      -> f b
+(>>=) a m = join (m <$> a)
 
 infixl 1 >>=
 
@@ -157,14 +141,12 @@ infixl 1 >>=
 --
 -- >>> ((\n -> n :. n :. Nil) <=< (\n -> n+1 :. n+2 :. Nil)) 1
 -- [2,2,3,3]
-(<=<) ::
-  Bind f =>
-  (b -> f c)
-  -> (a -> f b)
-  -> a
-  -> f c
-(<=<) =
-  error "todo"
+(<=<) :: Bind f =>
+        (b -> f c)
+      -> (a -> f b)
+      -> a
+      -> f c
+(<=<) m n = (=<<) m . n
 
 infixr 1 <=<
 
@@ -173,13 +155,10 @@ infixr 1 <=<
 -----------------------
 
 instance Bind IO where
-  (=<<) =
-    (P.=<<)
+  (=<<) = (P.=<<)
 
 instance Bind [] where
-  (=<<) =
-    (P.=<<)
+  (=<<) = (P.=<<)
 
 instance Bind P.Maybe where
-  (=<<) =
-    (P.=<<)
+  (=<<) = (P.=<<)
