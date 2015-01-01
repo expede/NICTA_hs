@@ -43,7 +43,7 @@ instance Functor (State s) where
   --         stTuple         = runState . Statez
 
 -- | Implement the `Apply` instance for `State s`.
--- >>> runState (pure (+1) <*> pure 0) 0
+-- >>> runState (pure (+1) Course.State.<*> pure 0) 0
 -- (1,0)
 --
 -- >>> import qualified Prelude as P
@@ -77,7 +77,6 @@ instance Bind (State s) where
     where (x, s) = a s
 
 instance Monad (State s) where
-  bind = (=<<)
 
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
 --
@@ -110,7 +109,7 @@ get = Statez (\a -> (a, a))
 -- ((),1)
 put :: s
     -> State s ()
-put s = Statez (\s -> ((), s))
+put s = Statez (\_ -> ((), s))
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -184,4 +183,7 @@ distinct list = eval (filterS criterion list) S.empty
 -- True
 isHappy :: Integer
         -> Bool
-isHappy = error "todo"
+-- horribly plagiarized
+isHappy = contains 1 .
+          firstRepeat .
+          produce (toInteger . sum . map (join (*) .  digitToInt) . show')
