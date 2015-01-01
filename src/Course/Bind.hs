@@ -12,12 +12,13 @@ module Course.Bind( Bind(..)
 import Course.Core
 import Course.Functor
 import Course.Apply(Apply)
+import Course.Applicative(Applicative)
 import Course.Id
 import Course.List
 import Course.Optional
 import qualified Prelude as P
 
-class Apply f => Bind f where
+class (Apply f, Applicative f) => Bind f where
   -- Pronounced, bind.
   (=<<) :: (a -> f b)
         -> f a

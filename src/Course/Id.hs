@@ -18,7 +18,5 @@ bindId :: (a -> Id b) -> Id a -> Id b
 bindId f (Id a) = f a
 
 instance P.Monad Id where
-  (>>=) =
-    flip bindId
-  return =
-    Id
+  (>>=) = flip bindId
+  return = Id
