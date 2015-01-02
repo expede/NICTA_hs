@@ -43,7 +43,7 @@ instance Functor (State s) where
   --         stTuple         = runState . Statez
 
 -- | Implement the `Apply` instance for `State s`.
--- >>> runState (pure (+1) Course.State.<*> pure 0) 0
+-- >>> runState (pure (+1) <*> pure 0) 0
 -- (1,0)
 --
 -- >>> import qualified Prelude as P
@@ -53,10 +53,10 @@ instance Apply (State s) where
   (<*>) :: State s (a -> b)
         -> State s a
         -> State s b
-(<*>) f g = Statez fg
-  where fg s = let (x, t) = f s
-                   (y, u) = g t
-                in (x y, u)
+  (<*>) (Statez f) (Statez g) = Statez (\x -> fg x)
+    where fg s = let (x, t) = f s
+                     (y, u) = g t
+                  in (x y, u)
 
 -- | Implement the `Applicative` instance for `State s`.
 -- >>> runState (pure 2) 0
@@ -77,6 +77,13 @@ instance Bind (State s) where
     where (x, s) = a s
 
 instance Monad (State s) where
+  bind :: (a -> State s b)
+       -> State s a
+       -> State s b
+  bind = (=<<)
+
+  return :: a -> State s a
+  return a = Statez (\s -> (a, s))
 
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
 --
@@ -184,6 +191,4 @@ distinct list = eval (filterS criterion list) S.empty
 isHappy :: Integer
         -> Bool
 -- horribly plagiarized
-isHappy = contains 1 .
-          firstRepeat .
-          produce (toInteger . sum . map (join (*) .  digitToInt) . show')
+isHappy = contains 1 . firstRepeat . produce (toInteger . sum . map (join (*) .  digitToInt) . show')
