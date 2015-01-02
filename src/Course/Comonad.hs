@@ -29,4 +29,4 @@ instance Comonad Id where
         (a -> b)
       -> f a
       -> f b
-(<$>) f m = pure $ f (copure m)
+(<$>) f = (<<=) (f . copure)
