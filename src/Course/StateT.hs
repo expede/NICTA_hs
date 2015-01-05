@@ -12,7 +12,7 @@ import Course.Optional
 import Course.List
 import Course.Functor
 import Course.Apply
-import Course.Applicative
+import Course.Applicative hiding (return)
 import Course.Bind
 import Course.Monad
 import Course.State
@@ -25,7 +25,7 @@ import qualified Prelude as P
 -- >>> instance Arbitrary a => Arbitrary (List a) where arbitrary = P.fmap listh arbitrary
 
 -- | A `StateT` is a function from a state value `s` to a functor f of (a produced value `a`, and a resulting state `s`).
-newtype StateT s f a = StateT { runStateT :: s -> f (a, s) }
+newtype StateT s m a = StateT { runStateT :: s -> m (a, s) }
 
 -- | Implement the `Functor` instance for @StateT s f@ given a @Functor f@.
 --
@@ -35,7 +35,8 @@ instance Functor f => Functor (StateT s f) where
   (<$>) :: (a -> b)
         -> StateT s f a
         -> StateT s f b
-  (<$>) f (StateT state) = StateT ((<$>) (first f) . state)
+  f <$> StateT ms = StateT (\z -> stateMap f <$> ms z)
+    where stateMap f (a, s) = (f a, s)
 
 -- | Implement the `Apply` instance for @StateT s f@ given a @Bind f@.
 --
@@ -49,8 +50,10 @@ instance Bind f => Apply (StateT s f) where
   (<*>) :: StateT s f (a -> b)
         -> StateT s f a
         -> StateT s f b
-  (<*>) (StateT f) (StateT a) = StateT (g <$> (StateT a))
-    where g (x, s) = runStateT (StateT f)
+  StateT f <*> StateT a = StateT fa
+    where stateMap g (a, s) = (g a, s)
+          fa s = do (g, t) <- f s
+                    stateMap g <$> a t
 
 -- | Implement the `Applicative` instance for @StateT s f@ given a @Applicative f@.
 --
