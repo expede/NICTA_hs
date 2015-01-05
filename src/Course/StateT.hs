@@ -65,7 +65,7 @@ instance Bind f => Apply (StateT s f) where
 instance Monad f => Applicative (StateT s f) where
   pure :: a
        -> StateT s f a
-  pure = error "todo"
+  pure a = StateT (\s -> pure (a, s))
 
 -- | Implement the `Bind` instance for @StateT s f@ given a @Monad f@.
 -- Make sure the state value is passed through in `bind`.
@@ -76,7 +76,8 @@ instance Monad f => Bind (StateT s f) where
   (=<<) :: (a -> StateT s f b)
         -> StateT s f a
         -> StateT s f b
-  (=<<) = error "todo"
+  f =<< (StateT a) = f foo
+    where foo s = a s >>= \(x, y) -> x
 
 instance Monad f => Monad (StateT s f) where
 
