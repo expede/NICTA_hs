@@ -76,8 +76,8 @@ instance Monad f => Bind (StateT s f) where
   (=<<) :: (a -> StateT s f b)
         -> StateT s f a
         -> StateT s f b
-  f =<< (StateT a) = f foo
-    where foo s = a s >>= \(x, y) -> x
+  f =<< StateT a = StateT ((=<<) (unstateAp . a))
+    where unstateAp (u, s) = runStateT (f u) s
 
 instance Monad f => Monad (StateT s f) where
 
@@ -90,7 +90,7 @@ type State' s a = StateT s Id a
 -- Id ((),1)
 state' :: (s -> (a, s))
        -> State' s a
-state' = error "todo"
+state' a = stateT (Id . a)
 
 -- | Provide an unwrapper for `State'` values.
 --
